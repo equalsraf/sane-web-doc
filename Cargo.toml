@@ -1,0 +1,7 @@
+[package]
+name = "sane-web-test"
+version = "0.1.0"
+authors = ["raf"]
+
+[dependencies]
+html5ever = "*"
