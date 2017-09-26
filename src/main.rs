@@ -33,6 +33,10 @@ fn walk(level: usize, handle: Handle, stats: &mut Stats) {
         NodeData::Comment { ref contents } => (),
         NodeData::Element { ref name, ref attrs, .. } => {
             
+            if name.local == local_name!("script") {
+                stats.script_tags += 1;
+            }
+
             if attrs.borrow().len() == 0 && children.len() == 1 {
                 if [local_name!("div"), local_name!("span")].contains(&name.local) {
                     match children[0].clone().data {
