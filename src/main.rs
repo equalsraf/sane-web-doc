@@ -11,16 +11,12 @@ use std::io;
 #[derive(Debug)]
 pub struct Stats {
     decorative_nodes: usize,
-    depth: usize,
+    depths: Vec<usize>,
     script_tags: usize,
+    nav_tags: usize,
 }
 
 fn walk(level: usize, handle: Handle, stats: &mut Stats) {
-
-    if stats.depth < level {
-        stats.depth = level;
-    }
-
     let node = handle;
 
     let mut print_tag = false;
@@ -37,8 +33,12 @@ fn walk(level: usize, handle: Handle, stats: &mut Stats) {
                 stats.script_tags += 1;
             }
 
-            if attrs.borrow().len() == 0 && children.len() == 1 {
-                if [local_name!("div"), local_name!("span")].contains(&name.local) {
+            if name.local == local_name!("nav") {
+                stats.nav_tags += 1;
+            }
+
+            if children.len() == 1 {
+                if ![local_name!("li"), local_name!("svg"), local_name!("a"), local_name!("table"), local_name!("tbody")].contains(&name.local) {
                     match children[0].clone().data {
                         NodeData::Text {..} => (),
                         _ => {
@@ -54,7 +54,7 @@ fn walk(level: usize, handle: Handle, stats: &mut Stats) {
     }
 
     if print_tag {
-        println!("\n BAD tag ========\n");
+        println!("\n BAD tag ========");
         serialize(io::stdout(), &node, SerializeOpts {
             scripting_enabled: true,
             traversal_scope: html5ever::serialize::TraversalScope::IncludeNode,
@@ -63,6 +63,10 @@ fn walk(level: usize, handle: Handle, stats: &mut Stats) {
     }
     for child in children.iter() {
         walk(level+1, child.clone(), stats);
+    }
+
+    if children.len() == 0 {
+        stats.depths.push(level);
     }
 }
 
@@ -75,8 +79,9 @@ fn main() {
 
     let mut s = Stats {
         decorative_nodes: 0,
-        depth: 0,
+        depths: Vec::new(),
         script_tags: 0,
+        nav_tags: 0,
     };
     walk(0, dom.document, &mut s);
 
@@ -87,5 +92,10 @@ fn main() {
         }
     }
 
-    println!("\n{:#?}", s);
+    println!("\n");
+    println!("<script> tags: {}", s.script_tags);
+    println!("decorative nodes: {}", s.decorative_nodes);
+    let sum: usize = s.depths.iter().sum();
+    println!("average depth: {}", sum / s.depths.len());
+    println!("<nav> tags: {}", s.nav_tags);
 }
