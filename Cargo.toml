@@ -5,3 +5,4 @@ authors = ["raf"]
 
 [dependencies]
 html5ever = "*"
+string_cache = "*"

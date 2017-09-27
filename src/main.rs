@@ -6,6 +6,8 @@ use html5ever::rcdom::{NodeData, RcDom, Handle};
 use html5ever::tendril::TendrilSink;
 use html5ever::serialize::{Serialize, SerializeOpts, serialize};
 
+extern crate string_cache;
+
 use std::io;
 
 #[derive(Debug)]
@@ -15,6 +17,12 @@ pub struct Stats {
     script_tags: usize,
     nav_tags: usize,
 }
+
+const NONDECORATIVE: &[string_cache::atom::Atom<html5ever::LocalNameStaticSet>] = &[
+    local_name!("li"), local_name!("svg"), local_name!("a"), local_name!("table"), local_name!("tbody"),
+    local_name!("h1"), local_name!("h2"), local_name!("h3"),
+    local_name!("td"),
+];
 
 fn walk(level: usize, handle: Handle, stats: &mut Stats) {
     let node = handle;
@@ -38,7 +46,7 @@ fn walk(level: usize, handle: Handle, stats: &mut Stats) {
             }
 
             if children.len() == 1 {
-                if ![local_name!("li"), local_name!("svg"), local_name!("a"), local_name!("table"), local_name!("tbody")].contains(&name.local) {
+                if !NONDECORATIVE.contains(&name.local) {
                     match children[0].clone().data {
                         NodeData::Text {..} => (),
                         _ => {
@@ -97,5 +105,6 @@ fn main() {
     println!("decorative nodes: {}", s.decorative_nodes);
     let sum: usize = s.depths.iter().sum();
     println!("average depth: {}", sum / s.depths.len());
+    println!("max depth: {}", s.depths.iter().max().unwrap_or(&0));
     println!("<nav> tags: {}", s.nav_tags);
 }
